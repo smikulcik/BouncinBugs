@@ -66,8 +66,7 @@ public class TurtleFlip {
         b.board = test6;
         b.print();
         //System.out.println(Integer.toBinaryString(b.hashCode()));
-        ArrayList<ArrayList<Move>> solutions = new ArrayList();
-        Solver.solve(b, new ArrayList<>(), solutions);
+        ArrayList<ArrayList<Move>> solutions = Solver.solve(b);
         
         ArrayList<Move> best = solutions.get(0);  // one of the best solutions
         playthrough_moves(new Board(b), best);

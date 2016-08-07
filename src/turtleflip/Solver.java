@@ -7,14 +7,10 @@
 package turtleflip;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.PriorityQueue;
 import java.util.stream.Collectors;
 
 /**
@@ -25,82 +21,40 @@ public class Solver {
     
     public static final boolean DEBUG = false;
     
-    public static boolean solve(Board b, ArrayList<Move> moves, ArrayList<ArrayList<Move>> solutions) throws IllegalMoveException, InterruptedException{
-        
-        PriorityBlockingQueue<BoardState> pq = new PriorityBlockingQueue(1, new Comparator<BoardState>() {
+    public static ArrayList<ArrayList<Move>> solve(Board b)
+            throws IllegalMoveException, InterruptedException{
+        ArrayList<ArrayList<Move>> solutions = new ArrayList<>();
+        PriorityQueue<BoardState> pq = new PriorityQueue(1, new Comparator<BoardState>() {
             @Override
             public int compare(BoardState b1, BoardState b2) {
-                //double normalized_num_down_1 = b1.board.getNumDown()/(double)b1.board.getNum();
-                //double normalized_num_down_2 = b2.board.getNumDown()/(double)b2.board.getNum();
-                
-                //if(b1.board.getNumDown() - b2.board.getNumDown() == 0)
+                // by least moves, then by least DOWN
                 if(b1.moves.size() - b2.moves.size() != 0)
                     return b1.moves.size() - b2.moves.size();
                 else
                     return b1.board.getNumDown() - b2.board.getNumDown();
-                
-                /*double s1 = normalized_num_down_1*(double)b1.board.getNumDown();
-                double s2 = normalized_num_down_2*b2.board.getNumDown();
-                double score = s1 - s2;
-                if(Math.abs(score) < .0001)
-                    return 0;
-                if(score < 0)
-                    return -1;
-                else
-                    return 1;*/
-                //return normalized_num_down_1*(double)b1.board.getNumDown() - normalized_num_down_2*b2.board.getNumDown();
             }
         });
-        Map<Integer, Board> old_states = Collections.synchronizedMap(new HashMap<>(100));
-        BoardState init = new BoardState();
-        init.board = b;
-        init.moves = moves;
+        Map<Integer, Board> old_states = new HashMap<>(100);
+        BoardState init = new BoardState(b);
         pq.add(init);
         
         if(init.board.isSolved()){
             solutions.add(init.moves);
-            return true;
+            return solutions;
         }
-        Thread[] workers = new Thread[1];
-        for(int w=0; w< workers.length; w++){
-            final int worker_id = w;
-            workers[w] = new Thread(){
-                public void run(){
-                    try {
-                        work(worker_id, pq, solutions, old_states);
-                    } catch (IllegalMoveException ex) {
-                        Logger.getLogger(Solver.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (InterruptedException ex) {
-                        Logger.getLogger(Solver.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-            };
-            workers[w].start();
-        }
-        // wait for workers to finish
-        for(int w=0; w< workers.length; w++)
-            workers[w].join();
-        
-        return solutions.size() > 0;
-    }
-    private static boolean work(
-            int id, PriorityBlockingQueue<BoardState> pq, 
-            ArrayList<ArrayList<Move>> solutions, 
-            Map<Integer, Board> old_states
-    ) throws IllegalMoveException, InterruptedException{
-        BoardState bs = null;
+        BoardState bs;
         int iteration = 0;
         int max_iteration = 1000000;
         int min_down = Integer.MAX_VALUE;
-        while(iteration < max_iteration){ // && solutions.isEmpty()
+        while(iteration < max_iteration){
             // expand this board state
-            bs = pq.poll(1L, TimeUnit.SECONDS);
-            // check that we havn't seen this state before
+            bs = pq.poll();
+            // bs is null if we are done
             if(bs == null)
                 break;
             if(iteration % 10000 == 0 && DEBUG)
                 System.out.println(
-                    "W: " + id + " " + iteration + " Moves:" + bs.moves.size() + 
+                    iteration + " Moves:" + bs.moves.size() + 
                     " NumDown:" + bs.board.getNumDown() + 
                     " PQ_SIZE:" + pq.size() + 
                     " old_states_size: " + old_states.size());
@@ -108,18 +62,19 @@ public class Solver {
             iteration++;
         }
         if(iteration == max_iteration)
-            System.out.println(id +  " Max iteration hit. Stopping. Found " + solutions.size() + " solutions");
+            System.out.println(" Max iteration hit. Stopping. Found " + solutions.size() + " solutions");
         else if(pq.isEmpty())
             if(solutions.isEmpty())
                 System.out.println("Impossible: analyzed " + iteration + " states");
             else
                 System.out.println("Solved completely: analyzed " + iteration + " states");
-        return false;
+        
+        return solutions;
     }
     
     static void expandBoardState(
         BoardState bs,
-        PriorityBlockingQueue<BoardState> pq,
+        PriorityQueue<BoardState> pq,
         ArrayList<ArrayList<Move>> solutions,
         Map<Integer, Board> old_states
     ) throws IllegalMoveException{
@@ -130,12 +85,7 @@ public class Solver {
                     Move move = new Move(new Coord(i, j), new Coord(k, l));
                     if(bs.board.check_move(move) == null){
                         // create new board stat instance, save for later
-                        BoardState newbs = new BoardState();
-                        newbs.board = new Board(bs.board);
-                        newbs.moves = new ArrayList<>();
-                        bs.moves.stream().forEach((m) -> {
-                            newbs.moves.add(m);
-                        });
+                        BoardState newbs = new BoardState(bs);
                         // try new move and see if solved it
                         newbs.board.move(move);
                         newbs.moves.add(move);
@@ -181,5 +131,18 @@ public class Solver {
     static class BoardState {
         ArrayList<Move> moves;
         Board board;
+        public BoardState(Board board){
+            this.moves = new ArrayList<>();
+            this.board = board;
+        }
+        public BoardState(BoardState bs){
+            this.moves = new ArrayList<>();
+            this.board = new Board(bs.board);
+            
+            bs.moves.stream().forEach((m) -> {
+                moves.add(m);
+            });
+        }
+        
     }
 }
