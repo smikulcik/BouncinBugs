@@ -24,16 +24,19 @@ public class Solver {
     public static ArrayList<ArrayList<Move>> solve(Board b)
             throws IllegalMoveException, InterruptedException{
         ArrayList<ArrayList<Move>> solutions = new ArrayList<>();
-        PriorityQueue<BoardState> pq = new PriorityQueue(1, new Comparator<BoardState>() {
-            @Override
-            public int compare(BoardState b1, BoardState b2) {
-                // by least moves, then by least DOWN
-                if(b1.moves.size() - b2.moves.size() != 0)
-                    return b1.moves.size() - b2.moves.size();
-                else
-                    return b1.board.getNumDown() - b2.board.getNumDown();
+        PriorityQueue<BoardState> pq = new PriorityQueue(
+            1, 
+            new Comparator<BoardState>() {
+                @Override
+                public int compare(BoardState b1, BoardState b2) {
+                    // by least moves, then by least DOWN
+                    if(b1.moves.size() - b2.moves.size() != 0)
+                        return b1.moves.size() - b2.moves.size();
+                    else
+                        return b1.board.getNumDown() - b2.board.getNumDown();
+                }
             }
-        });
+        );
         Map<Integer, Board> old_states = new HashMap<>(100);
         BoardState init = new BoardState(b);
         pq.add(init);
@@ -62,12 +65,17 @@ public class Solver {
             iteration++;
         }
         if(iteration == max_iteration)
-            System.out.println(" Max iteration hit. Stopping. Found " + solutions.size() + " solutions");
+            System.out.println(
+                " Max iteration hit. Stopping. Found " +
+                solutions.size() + " solutions"
+            );
         else if(pq.isEmpty())
             if(solutions.isEmpty())
-                System.out.println("Impossible: analyzed " + iteration + " states");
+                System.out.println(
+                    "Impossible: analyzed " + iteration + " states");
             else
-                System.out.println("Solved completely: analyzed " + iteration + " states");
+                System.out.println(
+                    "Solved completely: analyzed " + iteration + " states");
         
         return solutions;
     }
@@ -106,8 +114,10 @@ public class Solver {
                         // only add new state if it is new
                         boolean is_old_board = false;
                         if(old_states.containsKey(newbs.board.hashCode())){
-                            // use hash code, but fall back to equals to double check
-                            Board old_board = (Board)old_states.get(newbs.board.hashCode());
+                            // use hash code, but fall back to 
+                            //    equals to double check
+                            Board old_board = (Board)old_states.get(
+                                newbs.board.hashCode());
                             if(newbs.board.equals(old_board)){
                                 is_old_board = true;
                             }else{

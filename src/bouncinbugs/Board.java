@@ -64,8 +64,14 @@ public class Board {
             return "must not move to starting location";
         if(board[m.end.row][m.end.col] != 0)
             return "must be empty in destination";
-        if((Math.abs(m.start.col - m.end.col) != 2 && (Math.abs(m.start.col - m.end.col) != 0)) ||
-           (Math.abs(m.start.row - m.end.row) != 2 && (Math.abs(m.start.row - m.end.row) != 0)))
+        if((
+                Math.abs(m.start.col - m.end.col) != 2 &&
+                Math.abs(m.start.col - m.end.col) != 0
+            ) || (
+                Math.abs(m.start.row - m.end.row) != 2 &&
+                Math.abs(m.start.row - m.end.row) != 0
+            )
+        )
             return "must be the right distance away";
         if(board[(m.start.row + m.end.row)/2][(m.start.col + m.end.col)/2] == 0)
             return "there must be a piece to jump";
@@ -79,7 +85,8 @@ public class Board {
             throw new IllegalMoveException(reason);
         
         board[m.end.row][m.end.col] = board[m.start.row][m.start.col];
-        board[(m.start.row + m.end.row)/2][(m.start.col + m.end.col)/2] *= -1; // flip
+        // flip
+        board[(m.start.row + m.end.row)/2][(m.start.col + m.end.col)/2] *= -1;
         board[m.start.row][m.start.col] = 0;
     }
     public boolean isSolved(){
