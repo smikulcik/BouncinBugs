@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package turtleflip;
+package bouncinbugs;
 
 import java.util.ArrayList;
 import java.util.stream.Collectors;
@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
  *
  * @author Simon
  */
-public class TurtleFlip {
+public class BouncinBugs {
 
     /**
      * @param args the command line arguments
